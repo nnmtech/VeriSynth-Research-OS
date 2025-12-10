@@ -1,5 +1,5 @@
 """Memory agent API endpoints."""
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
@@ -13,8 +13,8 @@ memory_agent = MemoryAgent()
 @router.post("/store", response_model=MemoryEntry)
 async def store_memory(
     content: str,
-    metadata: Optional[dict[str, Any]] = None,
-    provenance: Optional[dict[str, Any]] = None,
+    metadata: dict[str, Any] | None = None,
+    provenance: dict[str, Any] | None = None,
 ) -> MemoryEntry:
     """Store content in memory with provenance."""
     try:
@@ -24,7 +24,7 @@ async def store_memory(
             provenance=provenance,
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/search", response_model=MemorySearchResult)
@@ -33,7 +33,7 @@ async def search_memory(query: MemoryQuery) -> MemorySearchResult:
     try:
         return await memory_agent.search(query)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/{entry_id}", response_model=MemoryEntry)

@@ -18,9 +18,9 @@ async def execute_maker(request: MAKERRequest) -> MAKERResult:
             k_value=request.k_value or 2,
             timeout_seconds=request.timeout_seconds or 300,
         )
-        
+
         maker = MAKER(config=config)
-        
+
         # Create sample agents for demonstration
         # In production, these would be dynamically generated based on task_type
         async def sample_agent(**kwargs: Any) -> dict[str, Any]:
@@ -30,17 +30,17 @@ async def execute_maker(request: MAKERRequest) -> MAKERResult:
                 "reasoning": "Sample reasoning",
                 "confidence": 0.85,
             }
-        
+
         # Execute MAKER
         agents = [sample_agent for _ in range(5)]
         agent_inputs = [request.inputs for _ in range(5)]
-        
+
         result = await maker.first_to_ahead_by_k(
             agents=agents,
             agent_inputs=agent_inputs,
             k=config.k_value,
         )
-        
+
         # Convert to response
         winner = MAKERAgentResult(
             agent_id=result.agent_id,
@@ -49,7 +49,7 @@ async def execute_maker(request: MAKERRequest) -> MAKERResult:
             execution_time=result.execution_time,
             red_flags=result.red_flags,
         )
-        
+
         return MAKERResult(
             winner=winner,
             total_agents=len(agents),
@@ -57,4 +57,4 @@ async def execute_maker(request: MAKERRequest) -> MAKERResult:
             metadata=result.metadata,
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e

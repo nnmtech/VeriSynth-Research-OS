@@ -1,7 +1,5 @@
 """Security utilities for VeriSynth Research OS."""
 import secrets
-from datetime import datetime, timedelta
-from typing import Any, Optional
 
 from passlib.context import CryptContext
 
@@ -27,13 +25,13 @@ def sanitize_input(input_string: str, max_length: int = 1000) -> str:
     """Sanitize user input to prevent injection attacks."""
     if not input_string:
         return ""
-    
+
     # Truncate to max length
     sanitized = input_string[:max_length]
-    
+
     # Remove null bytes
     sanitized = sanitized.replace("\x00", "")
-    
+
     return sanitized.strip()
 
 

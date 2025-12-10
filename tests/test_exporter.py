@@ -11,19 +11,19 @@ from app.models.schemas import ExportRequest
 async def test_json_export() -> None:
     """Test JSON export."""
     agent = ExporterAgent()
-    
+
     data = {"name": "test", "value": 123}
     request = ExportRequest(
         data=data,
         format="json",
         options={"indent": 2},
     )
-    
+
     result = await agent.export(request)
-    
+
     assert result.format == "json"
     assert result.data is not None
-    
+
     # Verify it's valid JSON
     parsed = json.loads(result.data)
     assert parsed == data
@@ -33,7 +33,7 @@ async def test_json_export() -> None:
 async def test_csv_export() -> None:
     """Test CSV export."""
     agent = ExporterAgent()
-    
+
     data = [
         {"name": "Alice", "age": 30},
         {"name": "Bob", "age": 25},
@@ -43,9 +43,9 @@ async def test_csv_export() -> None:
         format="csv",
         options={},
     )
-    
+
     result = await agent.export(request)
-    
+
     assert result.format == "csv"
     assert result.data is not None
     assert "name,age" in result.data

@@ -27,7 +27,7 @@ logger = structlog.get_logger(__name__)
 def create_application() -> FastAPI:
     """Create and configure FastAPI application."""
     settings = get_settings()
-    
+
     app = FastAPI(
         title=settings.app_name,
         version=settings.app_version,
@@ -35,7 +35,7 @@ def create_application() -> FastAPI:
         redoc_url="/redoc",
         openapi_url="/openapi.json",
     )
-    
+
     # Configure CORS
     app.add_middleware(
         CORSMiddleware,
@@ -44,10 +44,10 @@ def create_application() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    
+
     # Include API router
     app.include_router(api_router, prefix=settings.api_v1_prefix)
-    
+
     @app.on_event("startup")
     async def startup_event() -> None:
         """Startup event handler."""
@@ -58,12 +58,12 @@ def create_application() -> FastAPI:
             environment=settings.environment,
             is_cloud_run=settings.is_cloud_run(),
         )
-    
+
     @app.on_event("shutdown")
     async def shutdown_event() -> None:
         """Shutdown event handler."""
         logger.info("application_shutdown")
-    
+
     @app.exception_handler(Exception)
     async def global_exception_handler(request: any, exc: Exception) -> JSONResponse:
         """Global exception handler."""
@@ -80,7 +80,7 @@ def create_application() -> FastAPI:
                 "detail": str(exc) if settings.debug else "An error occurred",
             },
         )
-    
+
     return app
 
 
@@ -90,9 +90,9 @@ app = create_application()
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     settings = get_settings()
-    
+
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",

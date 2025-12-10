@@ -1,7 +1,7 @@
 """Pydantic models for VeriSynth Research OS."""
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -25,7 +25,7 @@ class TaskStatus(str, Enum):
 # Base schemas
 class BaseSchema(BaseModel):
     """Base schema with common fields."""
-    
+
     class Config:
         """Pydantic config."""
         from_attributes = True
@@ -43,7 +43,7 @@ class HealthResponse(BaseModel):
 class ErrorResponse(BaseModel):
     """Error response."""
     error: str
-    detail: Optional[str] = None
+    detail: str | None = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
 
@@ -60,7 +60,7 @@ class MemoryEntry(BaseModel):
     """Memory entry with provenance."""
     id: str
     content: str
-    embedding: Optional[list[float]] = None
+    embedding: list[float] | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
     provenance: dict[str, Any] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -128,8 +128,8 @@ class ExportRequest(BaseModel):
 class ExportResult(BaseModel):
     """Export result."""
     format: str
-    url: Optional[str] = None
-    data: Optional[str] = None
+    url: str | None = None
+    data: str | None = None
     size_bytes: int
     execution_time: float
 
@@ -138,8 +138,8 @@ class ExportResult(BaseModel):
 class LLMRequest(BaseModel):
     """LLM completion request."""
     messages: list[dict[str, str]] = Field(..., description="List of messages")
-    provider: Optional[str] = Field(None, description="LLM provider")
-    model: Optional[str] = Field(None, description="Model name")
+    provider: str | None = Field(None, description="LLM provider")
+    model: str | None = Field(None, description="Model name")
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     max_tokens: int = Field(default=1000, ge=1, le=32000)
 
@@ -157,8 +157,8 @@ class MAKERRequest(BaseModel):
     """MAKER execution request."""
     task_type: str = Field(..., description="Type of task to execute")
     inputs: dict[str, Any] = Field(..., description="Task inputs")
-    k_value: Optional[int] = Field(None, ge=1, le=10)
-    timeout_seconds: Optional[int] = Field(None, ge=1, le=600)
+    k_value: int | None = Field(None, ge=1, le=10)
+    timeout_seconds: int | None = Field(None, ge=1, le=600)
 
 
 class MAKERAgentResult(BaseModel):
@@ -192,8 +192,8 @@ class Task(BaseModel):
     task_type: str
     status: TaskStatus
     inputs: dict[str, Any]
-    outputs: Optional[dict[str, Any]] = None
+    outputs: dict[str, Any] | None = None
     priority: int
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    completed_at: Optional[datetime] = None
+    completed_at: datetime | None = None

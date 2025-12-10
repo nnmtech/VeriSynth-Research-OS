@@ -14,4 +14,4 @@ async def transform_data(request: TransformRequest) -> TransformResult:
     try:
         return await transformer_agent.transform(request)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e

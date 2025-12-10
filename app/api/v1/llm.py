@@ -1,10 +1,10 @@
 """LLM router API endpoints."""
-from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 
 from app.core.llm_router import LLMMessage, LLMProvider, LLMRouter
-from app.models.schemas import LLMRequest, LLMResponse as LLMResponseSchema
+from app.models.schemas import LLMRequest
+from app.models.schemas import LLMResponse as LLMResponseSchema
 
 router = APIRouter()
 llm_router = LLMRouter()
@@ -19,12 +19,12 @@ async def complete(request: LLMRequest) -> LLMResponseSchema:
             LLMMessage(role=msg["role"], content=msg["content"])
             for msg in request.messages
         ]
-        
+
         # Get provider
-        provider: Optional[LLMProvider] = None
+        provider: LLMProvider | None = None
         if request.provider:
             provider = LLMProvider(request.provider)
-        
+
         # Generate completion
         response = await llm_router.complete(
             messages=messages,
@@ -33,7 +33,7 @@ async def complete(request: LLMRequest) -> LLMResponseSchema:
             temperature=request.temperature,
             max_tokens=request.max_tokens,
         )
-        
+
         return LLMResponseSchema(
             content=response.content,
             model=response.model,
@@ -41,7 +41,7 @@ async def complete(request: LLMRequest) -> LLMResponseSchema:
             usage=response.usage,
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/providers")

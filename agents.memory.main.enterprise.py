@@ -117,10 +117,13 @@ async def startup():
     
     try:
         credentials, project_id = google.auth.default()
+        # Ensure credentials are of type google.auth.credentials.Credentials
+        from google.auth.credentials import Credentials
+        if not isinstance(credentials, Credentials):
+            credentials = None
         db = firestore.Client(project=project_id, credentials=credentials)
         drive_service = build("drive", "v3", credentials=credentials, cache_discovery=False)
         task_client = tasks_v2.CloudTasksClient(credentials=credentials)
-        
         if VERTEX_AVAILABLE:
             aiplatform.init(project=project_id, credentials=credentials)
         
@@ -224,7 +227,7 @@ def enqueue_ingestion_task(file_id: str, folder_id: str, retry_count: int = 0):
         return None
     
     try:
-        parent = task_client.queue_path(project_id, "us-central1", CLOUD_TASKS_QUEUE)
+        parent = task_client.queue_path(str(project_id), "us-central1", CLOUD_TASKS_QUEUE)
         
         task = {
             "http_request": {
@@ -264,7 +267,7 @@ def embed(texts: List[str]) -> List[List[float]]:
         all_embeddings = []
         for i in range(0, len(texts), 5):
             batch = texts[i:i+5]
-            embeddings = model.get_embeddings(batch)
+            embeddings = model.get_embeddings([b for b in batch])
             all_embeddings.extend([e.values for e in embeddings])
         
         return all_embeddings
@@ -285,17 +288,31 @@ def extract_image_text(content: bytes, mime_type: str) -> str:
     try:
         # Use Vertex AI Vision API for image understanding
         from google.cloud import vision
-        client = vision.ImageAnnotatorClient(credentials=credentials)
-        
-        image = vision.Image(content=content)
-        response = client.document_text_detection(image=image)
-        
-        if response.error.message:
-            raise Exception(response.error.message)
-        
-        text = response.full_text_annotation.text
-        log.info(f"Extracted {len(text)} chars from image")
-        return text
+        try:
+            from google.oauth2.service_account import Credentials as ServiceAccountCredentials
+        except ImportError:
+            ServiceAccountCredentials = None
+        if credentials is not None and ServiceAccountCredentials is not None and isinstance(credentials, ServiceAccountCredentials):
+            client = vision.ImageAnnotatorClient(credentials=credentials)
+        else:
+            client = vision.ImageAnnotatorClient()
+        # Use text_detection instead of document_text_detection
+        # Use document_text_detection with proper Vision API image construction
+        from google.cloud import vision_v1
+        vision_image = vision_v1.Image(content=content)
+        features = [vision_v1.Feature(type=vision_v1.Feature.Type.DOCUMENT_TEXT_DETECTION)]
+        request = vision_v1.AnnotateImageRequest(image=vision_image, features=features)
+        try:
+            response = client.batch_annotate_images(requests=[request])
+            if response and response.responses and hasattr(response.responses[0], 'error') and response.responses[0].error.message:
+                raise Exception(response.responses[0].error.message)
+            if response and response.responses and hasattr(response.responses[0], 'full_text_annotation') and response.responses[0].full_text_annotation.text:
+                text = response.responses[0].full_text_annotation.text
+                log.info(f"Extracted {len(text)} chars from image")
+                return text
+        except Exception as e:
+            log.warning(f"Vision API extraction failed: {e}")
+        return ""
         
     except Exception as e:
         log.warning(f"Image extraction failed: {e}")
@@ -389,8 +406,10 @@ def extract_text(content: bytes, mime_type: str) -> str:
             text = ""
             for slide in prs.slides:
                 for shape in slide.shapes:
-                    if hasattr(shape, "text"):
-                        text += shape.text + "\n"
+                    # Safely extract text if present
+                    shape_text = getattr(shape, "text", None)
+                    if isinstance(shape_text, str):
+                        text += shape_text + "\n"
             log.info(f"Extracted {len(text)} chars from PowerPoint")
             return text
         except Exception as e:
@@ -506,21 +525,41 @@ async def process_drive_file(file: Dict[str, Any], parent_folder: str) -> int:
             return 0
     
     # Check if already processed
+    if db is None or not hasattr(db, "collection") or not callable(getattr(db, "collection", None)):
+        raise RuntimeError("Firestore client (db) is not initialized or missing 'collection' method. Check GCP credentials.")
     existing = db.collection("memory_hashes").document(content_hash).get()
     if existing.exists:
         log.info(f"Duplicate skipped: {file_name}")
         return 0
-    
-    # Download content
-    try:
-        request = drive_service.files().get_media(fileId=file_id)
-        fh = io.BytesIO()
-        downloader = MediaIoBaseDownload(fh, request)
-        done = False
-        while not done:
-            status, done = downloader.next_chunk()
-        content = fh.getvalue()
-    except Exception as e:
+        try:
+            if drive_service is None:
+                try:
+                    from googleapiclient.discovery import build
+                    import google.auth
+                    credentials, _ = google.auth.default()
+                    drive_service = build('drive', 'v3', credentials=credentials, cache_discovery=False)
+                except Exception as e:
+                    log.error(f"Failed to initialize drive_service: {e}")
+                    return 0
+            if drive_service is not None and hasattr(drive_service, "files") and callable(getattr(drive_service, "files", None)):
+                try:
+                    request = drive_service.files().get_media(fileId=file_id)
+                    fh = io.BytesIO()
+                    downloader = MediaIoBaseDownload(fh, request)
+                    done = False
+                    while not done:
+                        status, done = downloader.next_chunk()
+                    content = fh.getvalue()
+                    content_hash = hashlib.sha256(content).hexdigest()
+                except Exception as e:
+                    log.error(f"drive_service.files() failed for file {file_id}: {e}")
+                    return 0
+            else:
+                log.error(f"drive_service.files is not available or not callable for file {file_id}")
+                return 0
+        except Exception as e:
+            log.error(f"Download failed for {file_id}: {e}")
+            return 0
         log.error(f"Download failed for {file_id}: {e}")
         # FEATURE #13: Enqueue retry task
         enqueue_ingestion_task(file_id, parent_folder, retry_count=1)
@@ -555,6 +594,8 @@ async def process_drive_file(file: Dict[str, Any], parent_folder: str) -> int:
             "deleted": False  # FEATURE #12
         }
         
+        if db is None:
+            raise RuntimeError("Firestore client (db) is not initialized. Check GCP credentials.")
         db.collection("memory_docs").document(file_id).set(doc_data)
         
         # Store chunks with embeddings
@@ -568,9 +609,13 @@ async def process_drive_file(file: Dict[str, Any], parent_folder: str) -> int:
                 "embedding": emb,
                 "created_at": now_iso()
             }
+            if db is None:
+                raise RuntimeError("Firestore client (db) is not initialized. Check GCP credentials.")
             db.collection("chunks").add(chunk_data)
         
         # Dedupe hash
+        if db is None:
+            raise RuntimeError("Firestore client (db) is not initialized. Check GCP credentials.")
         db.collection("memory_hashes").document(content_hash).set({
             "file_id": file_id,
             "file_name": file_name,
@@ -761,10 +806,11 @@ async def renew_watch_channels():
             if expiration - now < timedelta(hours=12):
                 try:
                     # Stop old channel
-                    drive_service.channels().stop(body={
-                        "id": channel_id,
-                        "resourceId": info["resource_id"]
-                    }).execute()
+                    if drive_service is not None and hasattr(drive_service, "channels") and callable(getattr(drive_service, "channels", None)):
+                        drive_service.channels().stop(body={
+                            "id": channel_id,
+                            "resourceId": info["resource_id"]
+                        }).execute()
                     
                     # Start new channel
                     await start_watch(WatchChannelRequest(
@@ -812,6 +858,8 @@ async def gcs_eventarc_handler(request: Request):
         content_hash = hashlib.sha256(content).hexdigest()
         
         # Check dedupe
+        if db is None:
+            raise RuntimeError("Firestore client (db) is not initialized. Check GCP credentials.")
         existing = db.collection("memory_hashes").document(content_hash).get()
         if existing.exists:
             return JSONResponse({"status": "duplicate"}, status_code=200)
@@ -824,6 +872,8 @@ async def gcs_eventarc_handler(request: Request):
         
         # Store
         file_id = content_hash[:16]
+        if db is None:
+            raise RuntimeError("Firestore client (db) is not initialized. Check GCP credentials.")
         db.collection("memory_docs").document(file_id).set({
             "file_id": file_id,
             "file_name": name,
@@ -836,6 +886,8 @@ async def gcs_eventarc_handler(request: Request):
         })
         
         for i, (chunk, emb) in enumerate(zip(chunks, embeddings)):
+            if db is None:
+                raise RuntimeError("Firestore client (db) is not initialized. Check GCP credentials.")
             db.collection("chunks").add({
                 "document_id": file_id,
                 "chunk_index": i,
@@ -844,6 +896,8 @@ async def gcs_eventarc_handler(request: Request):
                 "created_at": now_iso()
             })
         
+        if db is None:
+            raise RuntimeError("Firestore client (db) is not initialized. Check GCP credentials.")
         db.collection("memory_hashes").document(content_hash).set({
             "file_id": file_id,
             "file_name": name,
@@ -868,6 +922,8 @@ def bm25_search(query: str, top_k: int = 20) -> List[Dict]:
     query_terms = query.lower().split()
     
     # Query Firestore for text matches
+    if db is None:
+        raise RuntimeError("Firestore client (db) is not initialized. Check GCP credentials.")
     all_chunks = db.collection("chunks").stream()
     
     results = []
@@ -891,7 +947,7 @@ def bm25_search(query: str, top_k: int = 20) -> List[Dict]:
     results.sort(key=lambda x: x["score"], reverse=True)
     return results[:top_k]
 
-def vector_search(query: str, top_k: int = 20, filters: Dict = None) -> List[Dict]:
+def vector_search(query: str, top_k: int = 20, filters: Optional[Dict] = None) -> List[Dict]:
     """
     Vector similarity search with metadata filters
     """
@@ -900,7 +956,10 @@ def vector_search(query: str, top_k: int = 20, filters: Dict = None) -> List[Dic
     
     # Query Matching Engine (if available) or Firestore
     # For now, simple Firestore similarity
-    all_chunks = db.collection("chunks").stream()
+    if db is not None and hasattr(db, "collection") and callable(getattr(db, "collection", None)):
+        all_chunks = db.collection("chunks").stream()
+    else:
+        all_chunks = []
     
     results = []
     for doc in all_chunks:
@@ -928,11 +987,13 @@ def vector_search(query: str, top_k: int = 20, filters: Dict = None) -> List[Dic
     results.sort(key=lambda x: x["score"], reverse=True)
     return results[:top_k]
 
-def hybrid_search(query: str, top_k: int = 20, filters: Dict = None) -> List[Dict]:
+def hybrid_search(query: str, top_k: int = 20, filters: Optional[Dict] = None) -> List[Dict]:
     """
     ENTERPRISE FEATURE: Hybrid search combining vector + BM25
     """
     # Get both result sets
+    if db is None:
+        raise RuntimeError("Firestore client (db) is not initialized. Check GCP credentials.")
     vector_results = vector_search(query, top_k * 2, filters)
     bm25_results = bm25_search(query, top_k * 2)
     
@@ -988,22 +1049,24 @@ async def search(req: SearchRequest):
     enriched = []
     for result in results:
         doc_id = result["document_id"]
-        doc_data = db.collection("memory_docs").document(doc_id).get().to_dict()
-        
+        if db is None:
+            raise RuntimeError("Firestore client (db) is not initialized. Check GCP credentials.")
+        doc_ref = db.collection("memory_docs").document(doc_id).get()
+        doc_data = doc_ref.to_dict() if doc_ref else None
         if doc_data and not doc_data.get("deleted", False):  # Exclude soft-deleted
             enriched.append({
                 "text": result["text"],
                 "score": result["score"],
                 "chunk_index": result["chunk_index"],
                 "provenance": {
-                    "file_name": doc_data.get("file_name"),
-                    "file_id": doc_data.get("file_id"),
-                    "version_hash": doc_data.get("content_hash"),  # FEATURE #7
-                    "revision_id": doc_data.get("revision_id"),  # FEATURE #6
-                    "modified_at": doc_data.get("modified_at"),  # FEATURE #8
-                    "uploaded_at": doc_data.get("uploaded_at"),  # FEATURE #18
-                    "drive_link": doc_data.get("drive_link"),
-                    "source": doc_data.get("source")
+                    "file_name": doc_data.get("file_name") if doc_data else None,
+                    "file_id": doc_data.get("file_id") if doc_data else None,
+                    "version_hash": doc_data.get("content_hash") if doc_data else None,
+                    "revision_id": doc_data.get("revision_id") if doc_data else None,
+                    "modified_at": doc_data.get("modified_at") if doc_data else None,
+                    "uploaded_at": doc_data.get("uploaded_at") if doc_data else None,
+                    "drive_link": doc_data.get("drive_link") if doc_data else None,
+                    "source": doc_data.get("source") if doc_data else None
                 }
             })
     
@@ -1045,8 +1108,8 @@ async def delete_document(document_id: str, req: DeleteRequest):
             doc_ref.delete()
             
             # Delete hash entry
-            doc_data = doc.to_dict()
-            if doc_data.get("content_hash"):
+            doc_data = doc.to_dict() if doc else None
+            if doc_data and doc_data.get("content_hash"):
                 db.collection("memory_hashes").document(doc_data["content_hash"]).delete()
             
             log.info(f"🗑️  Permanently deleted {document_id}")
@@ -1175,23 +1238,17 @@ async def get_red_flag_threshold(document_id: str):
     """
     ENTERPRISE FEATURE: Return dynamic red-flag threshold based on memory quality
     """
-    doc = db.collection("memory_docs").document(document_id).get()
-    
-    if not doc.exists:
+    if db is None:
+        raise RuntimeError("Firestore client (db) is not initialized. Check GCP credentials.")
+    doc_ref = db.collection("memory_docs").document(document_id).get()
+    if not doc_ref or not doc_ref.exists:
         return {"threshold": 1200}  # Default for advanced models
-    
-    doc_data = doc.to_dict()
-    
+    doc_data = doc_ref.to_dict() if doc_ref else None
     # Compute threshold based on document metadata
-    # High-quality sources (recent, well-structured) get lower thresholds
     base_threshold = 1200
-    
-    # Adjust based on source
-    if doc_data.get("source") == "drive":
+    if doc_data and doc_data.get("source") == "drive":
         base_threshold -= 100  # Trust Drive documents more
-    
-    # Adjust based on recency
-    modified_at = doc_data.get("modified_at")
+    modified_at = doc_data.get("modified_at") if doc_data else None
     if modified_at:
         age_days = (datetime.now(timezone.utc) - datetime.fromisoformat(modified_at.replace('Z', '+00:00'))).days
         if age_days < 30:

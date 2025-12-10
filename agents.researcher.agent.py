@@ -168,7 +168,8 @@ def calculate_credibility(source: Dict) -> float:
 # ------------------------------------------------------------------
 # WEB SEARCH
 # ------------------------------------------------------------------
-def search_web(query: str, max_results: int = 30, date_from: str = None, date_to: str = None) -> List[Dict]:
+from typing import Optional
+def search_web(query: str, max_results: int = 30, date_from: Optional[str] = None, date_to: Optional[str] = None) -> List[Dict]:
     """Search using Google Custom Search API"""
     if not custom_search_service or not GOOGLE_CSE_ID:
         log.warning("Custom Search not configured")
@@ -261,7 +262,7 @@ def search_scholarly(query: str, max_results: int = 20) -> List[Dict]:
 # ------------------------------------------------------------------
 # NEWS SEARCH
 # ------------------------------------------------------------------
-def search_news(query: str, max_results: int = 20, date_from: str = None, date_to: str = None) -> List[Dict]:
+def search_news(query: str, max_results: int = 20, date_from: Optional[str] = None, date_to: Optional[str] = None) -> List[Dict]:
     """Search news articles via NewsAPI"""
     if not NEWS_API_KEY:
         log.warning("NewsAPI not configured")

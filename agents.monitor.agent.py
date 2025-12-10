@@ -108,6 +108,10 @@ async def startup():
     try:
         credentials, project_id = google.auth.default()
         logging_client = cloud_logging.Client(project=project_id, credentials=credentials)
+        
+        from google.auth.credentials import Credentials
+        if not isinstance(credentials, Credentials):
+            credentials = None
         monitoring_client = monitoring_v3.MetricServiceClient(credentials=credentials)
         db = firestore.Client(project=project_id, credentials=credentials)
         

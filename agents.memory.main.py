@@ -88,7 +88,7 @@ def embed(texts: List[str]) -> List[List[float]]:
     # Use the aiplatform TextEmbeddingModel
     from vertexai.language_models import TextEmbeddingModel
     model = TextEmbeddingModel.from_pretrained("text-embedding-004")
-    embeddings = model.get_embeddings(texts)
+    embeddings = model.get_embeddings([t for t in texts])
     return [e.values for e in embeddings]
 
 # ------------------------------------------------------------------
@@ -280,6 +280,8 @@ async def process_drive_file(file: Dict[str, Any], parent_folder: str) -> int:
         content = request.execute()
         content_hash = sha256_hash(content)
 
+    if db is None:
+        raise RuntimeError("Firestore client (db) is not initialized. Check GCP credentials.")
     if db.collection("memory_hashes").document(content_hash).get().exists:
         log.info("Duplicate skipped (hash match): %s", file_name)
         return 0
@@ -313,7 +315,14 @@ async def process_drive_file(file: Dict[str, Any], parent_folder: str) -> int:
 
     if datapoints:
         try:
-            index.upsert_datapoints(datapoints)
+            if index is None:
+                raise RuntimeError("Matching Engine index is not initialized.")
+            if hasattr(index, "upsert_datapoints"):
+                index.upsert_datapoints(datapoints)
+            else:
+                raise AttributeError("Matching Engine index does not support upsert_datapoints.")
+            if db is None:
+                raise RuntimeError("Firestore client (db) is not initialized. Check GCP credentials.")
             db.collection("memory_docs").document(file_id).set({
                 "file_name": file_name,
                 "file_id": file_id,
@@ -323,6 +332,8 @@ async def process_drive_file(file: Dict[str, Any], parent_folder: str) -> int:
                 "parent_folder": parent_folder,
                 "indexed_at": datetime.now(timezone.utc).isoformat()
             })
+            if db is None:
+                raise RuntimeError("Firestore client (db) is not initialized. Check GCP credentials.")
             db.collection("memory_hashes").document(content_hash).set({
                 "file_id": file_id,
                 "file_name": file_name,

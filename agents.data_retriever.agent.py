@@ -21,6 +21,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 import requests
 import pandas as pd
+from google.auth.credentials import Credentials
 
 log = logging.getLogger("data_retriever")
 log.setLevel(logging.INFO)
@@ -97,6 +98,9 @@ async def startup():
     
     try:
         credentials, project_id = google.auth.default()
+        from google.auth.credentials import Credentials
+        if not isinstance(credentials, Credentials):
+            credentials = None
         bq_client = bigquery.Client(project=project_id, credentials=credentials)
         storage_client = storage.Client(project=project_id, credentials=credentials)
         sheets_service = build("sheets", "v4", credentials=credentials, cache_discovery=False)
@@ -148,7 +152,7 @@ def fetch_bigquery(spec: BigQuerySpec) -> pd.DataFrame:
         bytes_processed = dry_run_job.total_bytes_processed
         log.info(f"Query will process {bytes_processed:,} bytes")
         
-        if bytes_processed > spec.max_bytes:
+        if spec.max_bytes is not None and bytes_processed > spec.max_bytes:
             raise HTTPException(
                 400, 
                 f"Query would process {bytes_processed:,} bytes, exceeding limit of {spec.max_bytes:,}"
@@ -359,7 +363,7 @@ def infer_schema(df: pd.DataFrame) -> List[ColumnSchema]:
         schema.append(ColumnSchema(
             name=col,
             type=col_type,
-            nullable=nullable
+            nullable=bool(nullable),
         ))
     
     return schema
@@ -373,7 +377,7 @@ def validate_and_coerce(df: pd.DataFrame) -> tuple[pd.DataFrame, List[str]]:
         if df[col].dtype == "object":
             # Try numeric conversion
             try:
-                df[col] = pd.to_numeric(df[col], errors='ignore')
+                df[col] = pd.to_numeric(df[col], errors='coerce')
             except:
                 pass
         
@@ -404,33 +408,35 @@ async def fetch_data(req: DataRequest) -> DataResponse:
     
     try:
         # Route to appropriate fetcher
+        spec = req.spec if isinstance(req.spec, dict) else req.spec.model_dump()
+        
         if req.source == SourceType.BIGQUERY:
-            spec = BigQuerySpec(**req.spec) if isinstance(req.spec, dict) else req.spec
+            spec = BigQuerySpec(**spec)
             df = fetch_bigquery(spec)
             table_name = "bigquery_result"
             
         elif req.source == SourceType.SHEETS:
-            spec = SheetsSpec(**req.spec) if isinstance(req.spec, dict) else req.spec
+            spec = SheetsSpec(**spec)
             df = fetch_sheets(spec)
             table_name = f"sheets_{spec.spreadsheet_id[:8]}"
             
         elif req.source == SourceType.REST_API:
-            spec = RestApiSpec(**req.spec) if isinstance(req.spec, dict) else req.spec
+            spec = RestApiSpec(**spec)
             df = fetch_rest_api(spec)
             table_name = "rest_api_result"
             
-        elif req.source == SourceType.GCS_CSV:
-            uri = req.spec.get("uri") if isinstance(req.spec, dict) else req.spec
+        elif isinstance(spec, str):
+            uri = spec
             df = fetch_csv_gcs(uri)
             table_name = "gcs_csv_result"
             
-        elif req.source == SourceType.URL_CSV:
-            url = req.spec.get("url") if isinstance(req.spec, dict) else req.spec
+        elif isinstance(spec, str):
+            url = spec
             df = fetch_csv_url(url)
             table_name = "url_csv_result"
             
-        elif req.source == SourceType.URL_JSON:
-            url = req.spec.get("url") if isinstance(req.spec, dict) else req.spec
+        elif isinstance(spec, str):
+            url = spec
             df = fetch_json_url(url)
             table_name = "url_json_result"
         
@@ -473,7 +479,7 @@ async def fetch_data(req: DataRequest) -> DataResponse:
             table_name=table_name,
             rows=len(df),
             columns=schema,
-            preview=preview,
+            preview=[{str(k): v for k, v in x.items()} for x in preview],
             data_path=data_path,
             provenance=provenance,
             warnings=warnings

@@ -9,8 +9,8 @@ async def test_maker_first_to_ahead_by_k() -> None:
     """Test MAKER first_to_ahead_by_k strategy."""
     maker = MAKER(config=MAKERConfig(k_value=2, timeout_seconds=10))
 
-    # Create sample agents
-    async def agent(**kwargs):  # type: ignore
+    # Create sample agents - type ignore needed for test mock function
+    async def agent(**kwargs):  # type: ignore[no-untyped-def]
         return {"result": "success", "confidence": 0.8}
 
     agents = [agent for _ in range(5)]

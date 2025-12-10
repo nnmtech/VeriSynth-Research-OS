@@ -193,12 +193,15 @@ class MemoryAgent:
             return False
 
         try:
-            await self.collection.document(entry_id).update({
-                "provenance": firestore.firestore.ArrayUnion([provenance_update]),
-                "updated_at": datetime.utcnow(),
-            })
-            self.logger.info("provenance_updated", entry_id=entry_id)
-            return True
+            # Use ArrayUnion directly from firestore module
+            if firestore:
+                await self.collection.document(entry_id).update({
+                    "provenance": firestore.ArrayUnion([provenance_update]),
+                    "updated_at": datetime.utcnow(),
+                })
+                self.logger.info("provenance_updated", entry_id=entry_id)
+                return True
+            return False
         except Exception as e:
             self.logger.error("provenance_update_failed", entry_id=entry_id, error=str(e))
             return False

@@ -165,7 +165,11 @@ class AnthropicClient(BaseLLMClient):
 
             response = await self.client.messages.create(**request_params)
 
-            content = response.content[0].text if response.content else ""
+            # Safely extract content with bounds checking
+            content = ""
+            if response.content and len(response.content) > 0:
+                content = response.content[0].text
+
             usage = {
                 "prompt_tokens": response.usage.input_tokens,
                 "completion_tokens": response.usage.output_tokens,

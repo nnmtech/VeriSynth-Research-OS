@@ -184,7 +184,7 @@ class MemoryAgent:
 
         Args:
             entry_id: Entry ID
-            provenance_update: Provenance fields to update
+            provenance_update: Provenance fields to update (merged with existing)
 
         Returns:
             True if successful
@@ -193,15 +193,23 @@ class MemoryAgent:
             return False
 
         try:
-            # Use ArrayUnion directly from firestore module
-            if firestore:
-                await self.collection.document(entry_id).update({
-                    "provenance": firestore.ArrayUnion([provenance_update]),
-                    "updated_at": datetime.utcnow(),
-                })
-                self.logger.info("provenance_updated", entry_id=entry_id)
-                return True
-            return False
+            # Get current entry
+            doc = await self.collection.document(entry_id).get()
+            if not doc.exists:
+                return False
+
+            # Merge provenance updates
+            current_data = doc.to_dict()
+            current_provenance = current_data.get("provenance", {})
+            updated_provenance = {**current_provenance, **provenance_update}
+
+            # Update with merged provenance
+            await self.collection.document(entry_id).update({
+                "provenance": updated_provenance,
+                "updated_at": datetime.utcnow(),
+            })
+            self.logger.info("provenance_updated", entry_id=entry_id)
+            return True
         except Exception as e:
             self.logger.error("provenance_update_failed", entry_id=entry_id, error=str(e))
             return False

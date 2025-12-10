@@ -1,0 +1,56 @@
+VeriSynthOS/
+├── README.md                              # Main documentation (updated with implementation status)
+├── README.md.backup                       # Backup of previous README
+├── Repository Structure                   # This file
+│
+├── agents.core.maker.py                   # MAKER voting engine (first-to-ahead-by-k)
+├── agents.core.llm_router.py             # Multi-provider LLM interface
+│
+├── agents.memory.main.py                 # Memory agent FastAPI server
+├── memory.agent.md                       # Memory architecture documentation
+│
+├── agents.verifier.agent.py              # Fact verification agent
+├── agents.transformer.agent.py           # Data transformation agent
+├── agents.exporter.agent.py              # Export generation agent
+├── orchestrator.agent.py                 # Job orchestration & memory enrichment
+│
+└── [Future Structure]
+    ├── docs/
+    │   ├── user-guide.md
+    │   ├── security-whitepaper.md
+    │   └── faq.md
+    │
+    ├── infra/
+    │   ├── terraform/                     # GCP deployment scripts
+    │   │   ├── main.tf
+    │   │   ├── variables.tf
+    │   │   └── modules/
+    │   │       ├── cloud-run-agents/
+    │   │       ├── vertex-matching-engine/
+    │   │       └── monitoring/
+    │   └── cloud-deploy/
+    │       └── pipeline.yaml
+    │
+    ├── apps/
+    │   └── studio/                        # Next.js web UI
+    │       ├── app/
+    │       ├── components/
+    │       └── package.json
+    │
+    ├── examples/                          # Demo jobs & deliverables
+    │   ├── urban-heat-islands-2025/
+    │   └── ...
+    │
+    ├── monitoring/
+    │   └── looker-studio-templates/
+    │
+    └── scripts/
+        └── deploy-all.sh
+
+Current Implementation (Dec 2025):
+- ✅ Core MAKER voting engine with Pydantic v2
+- ✅ Multi-provider LLM router (OpenAI, Claude, Grok, Ollama)
+- ✅ Memory agent with Drive ingestion & vector storage
+- ✅ Specialist agents (verifier, transformer, exporter)
+- ✅ Orchestrator with memory enrichment framework
+- ⚠️ Pending: Full web UI, Terraform deployment, examples

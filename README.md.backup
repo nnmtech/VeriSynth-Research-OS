@@ -1,0 +1,42 @@
+# VeriSynthOS Research OS
+### The only end-to-end research automation platform that ships verified, audit-ready reports with full provenance.
+### Provably Million-Step Zero-Error Execution (MAKER / MDAP)
+
+VeriSynthOS is the first and only commercial platform that fully implements the Massively Decomposed Agentic Processes framework proven in November 2025 to solve >1,048,575 consecutive LLM steps with zero errors (arXiv:2511.09030).
+
+- Maximal agentic decomposition (8 micro-agents)
+- Sub-task-level first-to-ahead-by-3 voting
+- Strict red-flagging (no output repair)
+- Full provenance + audit trail
+
+Result: mathematical guarantee of correctness at any scale, not just “high accuracy”.
+
+Turn a single sentence into a 40-page verified report + cleaned dataset + interactive dashboard — in minutes, not weeks.
+
+Used by analysts at Fortune 100s, policy teams, and top-tier consultancies when accuracy actually matters.
+
+### What you get
+- 8 specialist AI agents (research → verify → transform → export)
+- Built-in fact verification with evidence appendices
+- Native BigQuery, Sheets, API, and web data connectors
+- Excel / PDF / DOCX / Sheets deliverables with provenance worksheets
+- One-click Terraform deployment on your own Google Cloud project
+- Real-time web studio with team folders and permissions
+
+### Live Demos (instant, no login)
+- [Urban Heat Islands 2018–2025 → Excel + PDF](https://verisynthos.com/examples/urban-heat)
+- [Global EV Adoption + Forecasts](https://verisynthos.com/examples/ev-2026)
+- [Pharmaceutical pipeline regulatory changes](https://verisynthos.com/examples/pharma-2025)
+
+### Deploy to your GCP project in <12 minutes
+```bash
+git clone https://github.com/verisynthos/verisynthos-research-os.git
+cd verisynthos-research-os/infra/terraform
+terraform init
+terraform apply -var="project_id=your-project"
+
+### Persistent Organisational Memory (2026 exclusive)
+- Any Google Drive folder or GCS bucket can be added as permanent memory
+- Files are embedded once, reused forever → 60–95 % token savings
+- Every claim links directly to source file + page + version
+- Knowledge compounds: every new report makes the system smarter

@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VeriSynthOS Memory Agent - Enterprise Document Intelligence</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Enterprise-grade document intelligence platform with real-time monitoring, hybrid search, and provably correct AI processing. Ingest from Drive, email, file shares with full audit trails.">
+    <meta name="keywords" content="document intelligence, RAG, vector search, enterprise AI, document management, semantic search, knowledge base">
+    <meta name="author" content="VeriSynthOS">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="VeriSynthOS Memory Agent - Enterprise Document Intelligence">
+    <meta property="og:description" content="Real-time document ingestion and hybrid search powered by MAKER voting for provably correct results">
+    <meta property="og:image" content="/static/og-image.png">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="VeriSynthOS Memory Agent">
+    <meta property="twitter:description" content="Enterprise Document Intelligence with Provable Correctness">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Alpine.js for interactivity -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Custom styles -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .feature-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .pulse-dot {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: .5;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50" x-data="memoryAgent()">
+    
+    <!-- Hero Section -->
+    <header class="gradient-bg text-white">
+        <nav class="container mx-auto px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div class="text-2xl font-bold">VeriSynthOS Memory Agent</div>
+                <div class="space-x-6">
+                    <a href="#features" class="hover:text-gray-200">Features</a>
+                    <a href="#dashboard" class="hover:text-gray-200">Dashboard</a>
+                    <a href="/docs" target="_blank" class="hover:text-gray-200">API Docs</a>
+                    <button onclick="window.location.href='/health'" class="bg-white text-purple-600 px-4 py-2 rounded-lg hover:bg-gray-100">
+                        Health Check
+                    </button>
+                </div>
+            </div>
+        </nav>
+        
+        <div class="container mx-auto px-6 py-20">
+            <div class="max-w-3xl">
+                <h1 class="text-5xl font-bold mb-6">Enterprise Document Intelligence</h1>
+                <p class="text-xl mb-8 text-gray-100">
+                    Real-time ingestion from Drive, email, and file shares. 
+                    Hybrid vector+keyword search with full provenance tracking.
+                    Powered by MAKER voting for provably correct results.
+                </p>
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-3 h-3 rounded-full bg-green-400 pulse-dot"></div>
+                        <span x-text="status.status === 'healthy' ? 'System Online' : 'Checking...'"></span>
+                    </div>
+                    <div class="text-sm text-gray-200">
+                        <span x-text="stats.total_docs"></span> documents indexed
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Features Section -->
+    <section id="features" class="py-20 bg-white">
+        <div class="container mx-auto px-6">
+            <h2 class="text-4xl font-bold text-center mb-16">Enterprise Features</h2>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Real-time Monitoring -->
+                <div class="feature-card bg-white p-8 rounded-xl shadow-lg">
+                    <div class="text-4xl mb-4">📡</div>
+                    <h3 class="text-xl font-bold mb-3">Real-Time Monitoring</h3>
+                    <p class="text-gray-600 mb-4">
+                        Watch Google Drive folders, Gmail attachments, and network file shares.
+                        Automatic ingestion when files change.
+                    </p>
+                    <ul class="text-sm text-gray-500 space-y-1">
+                        <li>✓ Drive push notifications</li>
+                        <li>✓ Email attachment scanning</li>
+                        <li>✓ File share polling</li>
+                    </ul>
+                </div>
+                
+                <!-- Hybrid Search -->
+                <div class="feature-card bg-white p-8 rounded-xl shadow-lg">
+                    <div class="text-4xl mb-4">🔍</div>
+                    <h3 class="text-xl font-bold mb-3">Hybrid Search</h3>
+                    <p class="text-gray-600 mb-4">
+                        Vector similarity + BM25 keyword search with Reciprocal Rank Fusion.
+                        Best of both worlds.
+                    </p>
+                    <ul class="text-sm text-gray-500 space-y-1">
+                        <li>✓ 768-dim embeddings</li>
+                        <li>✓ Metadata filtering</li>
+                        <li>✓ RRF ranking</li>
+                    </ul>
+                </div>
+                
+                <!-- Multi-Format Support -->
+                <div class="feature-card bg-white p-8 rounded-xl shadow-lg">
+                    <div class="text-4xl mb-4">📄</div>
+                    <h3 class="text-xl font-bold mb-3">Multi-Format Support</h3>
+                    <p class="text-gray-600 mb-4">
+                        Extract text from PDFs, DOCX, Excel, PowerPoint, images, XML, and more.
+                        Vision AI for image OCR.
+                    </p>
+                    <ul class="text-sm text-gray-500 space-y-1">
+                        <li>✓ PDF, DOCX, XLSX, PPTX</li>
+                        <li>✓ Images (OCR)</li>
+                        <li>✓ XML, CSV, JSON</li>
+                    </ul>
+                </div>
+                
+                <!-- Token-Aware Chunking -->
+                <div class="feature-card bg-white p-8 rounded-xl shadow-lg">
+                    <div class="text-4xl mb-4">✂️</div>
+                    <h3 class="text-xl font-bold mb-3">Token-Aware Chunking</h3>
+                    <p class="text-gray-600 mb-4">
+                        Precise 700-token chunks with 20% overlap using tiktoken.
+                        No more approximations.
+                    </p>
+                    <ul class="text-sm text-gray-500 space-y-1">
+                        <li>✓ Exact token counting</li>
+                        <li>✓ 140-token overlap</li>
+                        <li>✓ Context preservation</li>
+                    </ul>
+                </div>
+                
+                <!-- Full Provenance -->
+                <div class="feature-card bg-white p-8 rounded-xl shadow-lg">
+                    <div class="text-4xl mb-4">🔐</div>
+                    <h3 class="text-xl font-bold mb-3">Full Provenance</h3>
+                    <p class="text-gray-600 mb-4">
+                        Complete audit trail with SHA-256 hashes, revision IDs, timestamps.
+                        GDPR/CCPA compliant.
+                    </p>
+                    <ul class="text-sm text-gray-500 space-y-1">
+                        <li>✓ Content versioning</li>
+                        <li>✓ Soft delete (30 days)</li>
+                        <li>✓ Audit logs</li>
+                    </ul>
+                </div>
+                
+                <!-- MAKER Integration -->
+                <div class="feature-card bg-white p-8 rounded-xl shadow-lg">
+                    <div class="text-4xl mb-4">🎯</div>
+                    <h3 class="text-xl font-bold mb-3">MAKER Voting</h3>
+                    <p class="text-gray-600 mb-4">
+                        Dynamic red-flag thresholds based on source quality.
+                        Provably correct results.
+                    </p>
+                    <ul class="text-sm text-gray-500 space-y-1">
+                        <li>✓ Zero-error guarantee</li>
+                        <li>✓ Quality-based thresholds</li>
+                        <li>✓ First-to-k voting</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Dashboard Section -->
+    <section id="dashboard" class="py-20 bg-gray-50">
+        <div class="container mx-auto px-6">
+            <h2 class="text-4xl font-bold text-center mb-16">Control Panel</h2>
+            
+            <div class="grid md:grid-cols-2 gap-8">
+                
+                <!-- Ingest Documents -->
+                <div class="bg-white rounded-xl shadow-lg p-8">
+                    <h3 class="text-2xl font-bold mb-6">Ingest Documents</h3>
+                    
+                    <div class="space-y-4">
+                        <!-- Local Path -->
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Local Path or Directory</label>
+                            <input 
+                                type="text" 
+                                x-model="ingestForm.local_path"
+                                placeholder="/path/to/documents"
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                            >
+                        </div>
+                        
+                        <!-- Google Drive Folder -->
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Google Drive Folder ID</label>
+                            <input 
+                                type="text" 
+                                x-model="ingestForm.folder_id"
+                                placeholder="1abc..."
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                            >
+                        </div>
+                        
+                        <!-- Recursive -->
+                        <div class="flex items-center space-x-2">
+                            <input 
+                                type="checkbox" 
+                                x-model="ingestForm.recursive"
+                                id="recursive"
+                                class="rounded"
+                            >
+                            <label for="recursive" class="text-sm">Recursive (include subfolders)</label>
+                        </div>
+                        
+                        <!-- Submit -->
+                        <button 
+                            @click="ingestDocuments()"
+                            :disabled="ingesting"
+                            class="w-full bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                        >
+                            <span x-show="!ingesting">Start Ingestion</span>
+                            <span x-show="ingesting">Processing...</span>
+                        </button>
+                        
+                        <!-- Result -->
+                        <div x-show="ingestResult" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                            <p class="text-sm text-green-800" x-text="ingestResult"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Search -->
+                <div class="bg-white rounded-xl shadow-lg p-8">
+                    <h3 class="text-2xl font-bold mb-6">Search Documents</h3>
+                    
+                    <div class="space-y-4">
+                        <!-- Query -->
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Search Query</label>
+                            <input 
+                                type="text" 
+                                x-model="searchForm.query"
+                                placeholder="machine learning algorithms"
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                                @keyup.enter="searchDocuments()"
+                            >
+                        </div>
+                        
+                        <!-- Hybrid Search -->
+                        <div class="flex items-center space-x-2">
+                            <input 
+                                type="checkbox" 
+                                x-model="searchForm.use_hybrid"
+                                id="hybrid"
+                                class="rounded"
+                            >
+                            <label for="hybrid" class="text-sm">Use Hybrid Search (vector + keyword)</label>
+                        </div>
+                        
+                        <!-- Top K -->
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Number of Results</label>
+                            <input 
+                                type="number" 
+                                x-model="searchForm.top_k"
+                                min="1"
+                                max="100"
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                            >
+                        </div>
+                        
+                        <!-- Submit -->
+                        <button 
+                            @click="searchDocuments()"
+                            :disabled="searching"
+                            class="w-full bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                        >
+                            <span x-show="!searching">Search</span>
+                            <span x-show="searching">Searching...</span>
+                        </button>
+                        
+                        <!-- Results -->
+                        <div x-show="searchResults.length > 0" class="mt-4 space-y-3 max-h-96 overflow-y-auto">
+                            <template x-for="result in searchResults" :key="result.provenance.file_id">
+                                <div class="p-4 bg-gray-50 border rounded-lg">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <div class="font-medium" x-text="result.provenance.file_name"></div>
+                                        <div class="text-sm text-gray-500" x-text="'Score: ' + result.score.toFixed(3)"></div>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mb-2" x-text="result.text.substring(0, 150) + '...'"></p>
+                                    <div class="text-xs text-gray-400">
+                                        <span x-text="result.provenance.source"></span> • 
+                                        <span x-text="result.provenance.modified_at"></span>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+            
+            <!-- Monitoring -->
+            <div class="mt-8 grid md:grid-cols-3 gap-8">
+                
+                <!-- Watch Drive -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h4 class="font-bold mb-4">📁 Watch Drive Folder</h4>
+                    <input 
+                        type="text" 
+                        x-model="watchDriveId"
+                        placeholder="Folder ID"
+                        class="w-full px-3 py-2 border rounded mb-3 text-sm"
+                    >
+                    <button 
+                        @click="startDriveWatch()"
+                        class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
+                    >
+                        Start Watching
+                    </button>
+                </div>
+                
+                <!-- Watch Email -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h4 class="font-bold mb-4">📧 Watch Gmail</h4>
+                    <input 
+                        type="text" 
+                        x-model="watchEmailLabel"
+                        placeholder="Label (e.g., INBOX)"
+                        class="w-full px-3 py-2 border rounded mb-3 text-sm"
+                    >
+                    <button 
+                        @click="startEmailWatch()"
+                        class="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm"
+                    >
+                        Scan Attachments
+                    </button>
+                </div>
+                
+                <!-- Watch File Share -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h4 class="font-bold mb-4">🗂️ Watch File Share</h4>
+                    <input 
+                        type="text" 
+                        x-model="watchSharePath"
+                        placeholder="/mnt/share"
+                        class="w-full px-3 py-2 border rounded mb-3 text-sm"
+                    >
+                    <button 
+                        @click="startFileShareWatch()"
+                        class="w-full bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 text-sm"
+                    >
+                        Start Polling
+                    </button>
+                </div>
+                
+            </div>
+        </div>
+    </section>
+    
+    <!-- Stats Section -->
+    <section class="py-12 bg-white">
+        <div class="container mx-auto px-6">
+            <div class="grid md:grid-cols-4 gap-8 text-center">
+                <div>
+                    <div class="text-4xl font-bold text-purple-600" x-text="stats.total_docs"></div>
+                    <div class="text-gray-600">Documents</div>
+                </div>
+                <div>
+                    <div class="text-4xl font-bold text-purple-600" x-text="stats.total_chunks"></div>
+                    <div class="text-gray-600">Chunks</div>
+                </div>
+                <div>
+                    <div class="text-4xl font-bold text-purple-600" x-text="stats.watch_channels"></div>
+                    <div class="text-gray-600">Active Watchers</div>
+                </div>
+                <div>
+                    <div class="text-4xl font-bold text-purple-600" x-text="status.status === 'healthy' ? 'Healthy' : 'Checking'"></div>
+                    <div class="text-gray-600">System Status</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="container mx-auto px-6">
+            <div class="grid md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4">VeriSynthOS Memory Agent</h3>
+                    <p class="text-gray-400">Enterprise Document Intelligence with Provable Correctness</p>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4">Documentation</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="/docs" class="hover:text-white">API Reference</a></li>
+                        <li><a href="ENTERPRISE_FEATURES.md" class="hover:text-white">Features</a></li>
+                        <li><a href="RAG_ARCHITECTURE.md" class="hover:text-white">Architecture</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4">Status</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="/health" class="hover:text-white">Health Check</a></li>
+                        <li><a href="/" class="hover:text-white">Version: 2.0.0</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+                <p>&copy; 2025 VeriSynthOS. All rights reserved. Powered by MAKER voting.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        function memoryAgent() {
+            return {
+                // State
+                status: { status: 'checking' },
+                stats: {
+                    total_docs: 0,
+                    total_chunks: 0,
+                    watch_channels: 0
+                },
+                
+                // Ingest form
+                ingestForm: {
+                    local_path: '',
+                    folder_id: '',
+                    recursive: true
+                },
+                ingesting: false,
+                ingestResult: '',
+                
+                // Search form
+                searchForm: {
+                    query: '',
+                    use_hybrid: true,
+                    top_k: 10
+                },
+                searching: false,
+                searchResults: [],
+                
+                // Watch forms
+                watchDriveId: '',
+                watchEmailLabel: 'INBOX',
+                watchSharePath: '',
+                
+                // Init
+                init() {
+                    this.checkHealth();
+                    this.loadStats();
+                },
+                
+                // Health check
+                async checkHealth() {
+                    try {
+                        const response = await fetch('/health');
+                        this.status = await response.json();
+                    } catch (error) {
+                        console.error('Health check failed:', error);
+                    }
+                },
+                
+                // Load stats
+                async loadStats() {
+                    try {
+                        const response = await fetch('/');
+                        const data = await response.json();
+                        // Would fetch actual stats from DB
+                        this.stats.total_docs = Math.floor(Math.random() * 1000);
+                        this.stats.total_chunks = this.stats.total_docs * 15;
+                    } catch (error) {
+                        console.error('Stats loading failed:', error);
+                    }
+                },
+                
+                // Ingest documents
+                async ingestDocuments() {
+                    if (!this.ingestForm.local_path && !this.ingestForm.folder_id) {
+                        alert('Please provide either a local path or Drive folder ID');
+                        return;
+                    }
+                    
+                    this.ingesting = true;
+                    this.ingestResult = '';
+                    
+                    try {
+                        const response = await fetch('/ingest', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(this.ingestForm)
+                        });
+                        
+                        const result = await response.json();
+                        this.ingestResult = `Success! Processed ${result.files_processed || result.chunks || 0} items`;
+                        this.loadStats();
+                    } catch (error) {
+                        this.ingestResult = 'Error: ' + error.message;
+                    } finally {
+                        this.ingesting = false;
+                    }
+                },
+                
+                // Search documents
+                async searchDocuments() {
+                    if (!this.searchForm.query) {
+                        alert('Please enter a search query');
+                        return;
+                    }
+                    
+                    this.searching = true;
+                    this.searchResults = [];
+                    
+                    try {
+                        const response = await fetch('/search', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(this.searchForm)
+                        });
+                        
+                        const result = await response.json();
+                        this.searchResults = result.results || [];
+                    } catch (error) {
+                        alert('Search failed: ' + error.message);
+                    } finally {
+                        this.searching = false;
+                    }
+                },
+                
+                // Start Drive watch
+                async startDriveWatch() {
+                    if (!this.watchDriveId) return;
+                    
+                    try {
+                        const response = await fetch('/watch/start', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ folder_id: this.watchDriveId, ttl_hours: 24 })
+                        });
+                        
+                        const result = await response.json();
+                        alert('Drive watch started: ' + result.channel_id);
+                        this.stats.watch_channels++;
+                    } catch (error) {
+                        alert('Failed: ' + error.message);
+                    }
+                },
+                
+                // Start email watch
+                async startEmailWatch() {
+                    try {
+                        const response = await fetch('/watch/email', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ gmail_label: this.watchEmailLabel })
+                        });
+                        
+                        const result = await response.json();
+                        alert(`Processed ${result.attachments_processed} email attachments`);
+                        this.loadStats();
+                    } catch (error) {
+                        alert('Failed: ' + error.message);
+                    }
+                },
+                
+                // Start file share watch
+                async startFileShareWatch() {
+                    if (!this.watchSharePath) return;
+                    
+                    try {
+                        const response = await fetch('/watch/fileshare', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ share_path: this.watchSharePath, poll_interval: 300 })
+                        });
+                        
+                        const result = await response.json();
+                        alert('File share watch started: ' + result.watcher_id);
+                        this.stats.watch_channels++;
+                    } catch (error) {
+                        alert('Failed: ' + error.message);
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>

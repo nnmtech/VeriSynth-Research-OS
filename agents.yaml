@@ -1,0 +1,227 @@
+# VeriSynthOS Agent Registry
+# Defines all agents, their endpoints, scopes, and capabilities
+
+agents:
+  - id: orchestrator
+    name: Orchestrator Agent
+    description: Coordinate workflow between specialist agents
+    endpoint: ${ORCHESTRATOR_URL:-http://localhost:8000}
+    port: 8000
+    scopes:
+      - jobs.start
+      - jobs.read
+      - jobs.cancel
+      - agents.call
+    capabilities:
+      - job_management
+      - workflow_decomposition
+      - agent_routing
+      - retry_logic
+      - audit_trail
+    dependencies:
+      - memory
+      - researcher
+      - verifier
+      - data_retriever
+      - transformer
+      - exporter
+      - monitor
+
+  - id: memory
+    name: Memory/RAG Agent
+    description: Document ingestion, chunking, embedding, and hybrid search
+    endpoint: ${MEMORY_AGENT_URL:-http://localhost:7000}
+    port: 7000
+    scopes:
+      - drive.read
+      - drive.watch
+      - gcs.read
+      - gcs.watch
+      - vertex.embeddings
+      - firestore.write
+      - matching_engine.write
+    capabilities:
+      - document_ingestion
+      - drive_watch
+      - gcs_eventarc
+      - token_aware_chunking
+      - hybrid_search
+      - soft_delete
+      - email_connector
+      - fileshare_connector
+    dependencies: []
+
+  - id: researcher
+    name: Researcher Agent
+    description: Web search, scholarly sources, news aggregation
+    endpoint: ${RESEARCHER_AGENT_URL:-http://localhost:8001}
+    port: 8001
+    scopes:
+      - web.search
+      - scholar.read
+      - news.read
+    capabilities:
+      - web_search
+      - scholarly_search
+      - news_search
+      - credibility_scoring
+      - synthesis_generation
+      - maker_voting
+    dependencies:
+      - monitor
+
+  - id: verifier
+    name: Verifier Agent
+    description: Fact-checking and claim verification
+    endpoint: ${VERIFIER_AGENT_URL:-http://localhost:8002}
+    port: 8002
+    scopes:
+      - web.search
+      - factcheck.read
+    capabilities:
+      - claim_verification
+      - evidence_gathering
+      - maker_voting
+      - confidence_scoring
+    dependencies:
+      - researcher
+      - memory
+      - monitor
+
+  - id: data_retriever
+    name: Data Retriever Agent
+    description: Fetch structured data from APIs, BigQuery, Sheets
+    endpoint: ${DATA_RETRIEVER_AGENT_URL:-http://localhost:8003}
+    port: 8003
+    scopes:
+      - bigquery.read
+      - sheets.read
+      - gcs.read
+      - rest.call
+    capabilities:
+      - bigquery_query
+      - sheets_fetch
+      - rest_api_call
+      - csv_fetch
+      - schema_validation
+      - cost_guards
+    dependencies:
+      - monitor
+
+  - id: transformer
+    name: Transformer Agent
+    description: Data cleaning, normalization, and ETL
+    endpoint: ${TRANSFORMER_AGENT_URL:-http://localhost:8004}
+    port: 8004
+    scopes:
+      - gcs.read
+      - gcs.write
+      - bigquery.write
+    capabilities:
+      - data_cleaning
+      - type_coercion
+      - deduplication
+      - aggregation
+      - derived_columns
+      - maker_voting
+    dependencies:
+      - monitor
+
+  - id: exporter
+    name: Exporter Agent
+    description: Generate Excel, PDF, DOCX, Sheets deliverables
+    endpoint: ${EXPORTER_AGENT_URL:-http://localhost:8005}
+    port: 8005
+    scopes:
+      - drive.write
+      - sheets.write
+      - gcs.write
+    capabilities:
+      - excel_export
+      - pdf_export
+      - csv_export
+      - sheets_export
+      - provenance_embedding
+      - maker_voting
+    dependencies:
+      - monitor
+
+  - id: monitor
+    name: Monitor Agent
+    description: Logging, metrics, alerts, QA, and auditing
+    endpoint: ${MONITOR_AGENT_URL:-http://localhost:8006}
+    port: 8006
+    scopes:
+      - logging.write
+      - monitoring.write
+      - alerts.create
+      - firestore.write
+    capabilities:
+      - cloud_logging
+      - metrics_collection
+      - alerting
+      - qa_checks
+      - audit_trail
+      - dashboards
+    dependencies: []
+
+# Service accounts (one per agent)
+service_accounts:
+  - agent: orchestrator
+    email: orchestrator-sa@${GCP_PROJECT}.iam.gserviceaccount.com
+    roles:
+      - roles/run.invoker
+      - roles/firestore.user
+
+  - agent: memory
+    email: memory-sa@${GCP_PROJECT}.iam.gserviceaccount.com
+    roles:
+      - roles/drive.readonly
+      - roles/storage.objectViewer
+      - roles/aiplatform.user
+      - roles/firestore.user
+
+  - agent: researcher
+    email: researcher-sa@${GCP_PROJECT}.iam.gserviceaccount.com
+    roles:
+      - roles/run.invoker
+
+  - agent: verifier
+    email: verifier-sa@${GCP_PROJECT}.iam.gserviceaccount.com
+    roles:
+      - roles/run.invoker
+
+  - agent: data_retriever
+    email: data-retriever-sa@${GCP_PROJECT}.iam.gserviceaccount.com
+    roles:
+      - roles/bigquery.jobUser
+      - roles/bigquery.dataViewer
+      - roles/storage.objectViewer
+
+  - agent: transformer
+    email: transformer-sa@${GCP_PROJECT}.iam.gserviceaccount.com
+    roles:
+      - roles/storage.objectAdmin
+      - roles/bigquery.dataEditor
+
+  - agent: exporter
+    email: exporter-sa@${GCP_PROJECT}.iam.gserviceaccount.com
+    roles:
+      - roles/drive.file
+      - roles/storage.objectCreator
+
+  - agent: monitor
+    email: monitor-sa@${GCP_PROJECT}.iam.gserviceaccount.com
+    roles:
+      - roles/logging.logWriter
+      - roles/monitoring.metricWriter
+      - roles/firestore.user
+
+# Global configuration
+config:
+  region: us-central1
+  maker_mode: true
+  maker_k: 3
+  log_level: INFO
+  enable_tracing: true
+  enable_metrics: true

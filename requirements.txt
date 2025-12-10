@@ -1,0 +1,36 @@
+# FastAPI and web framework
+fastapi==0.109.1
+uvicorn[standard]==0.27.0
+pydantic==2.5.3
+pydantic-settings==2.1.0
+passlib[bcrypt]==1.7.4
+
+# Google Cloud dependencies
+google-cloud-firestore==2.14.0
+google-cloud-secret-manager==2.17.0
+google-cloud-aiplatform==1.40.0
+google-cloud-logging==3.9.0
+
+# LLM providers
+openai==1.10.0
+anthropic==0.18.1
+
+# HTTP client
+httpx==0.26.0
+
+# Logging and monitoring
+structlog==24.1.0
+
+# Vector search and embeddings
+numpy==1.26.3
+scikit-learn==1.4.0
+
+# Testing
+pytest==7.4.4
+pytest-asyncio==0.23.3
+pytest-cov==4.1.0
+
+# Development
+ruff==0.1.14
+mypy==1.8.0
+types-requests==2.31.0.20240106
